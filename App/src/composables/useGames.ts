@@ -31,6 +31,14 @@ export function useGames() {
       if (!response.ok) {
         throw new Error('Failed to fetch games');
       }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('API returned non-JSON response:', text);
+        throw new Error('API returned non-JSON response');
+      }
+
       const data = await response.json();
       
       // If searching by title, the API returns a single object, but we want an array
