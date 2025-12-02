@@ -42,13 +42,6 @@ jobs:
           secrets: 'ApiKey'
         id: kv
 
-      - name: Configure SWA App Settings
-        run: |
-          az staticwebapp appsettings set \
-            --name proud-water-0f5fb840f \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --setting-names VITE_API_KEY="${{ steps.kv.outputs.ApiKey }}"
-
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
