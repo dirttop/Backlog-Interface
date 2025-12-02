@@ -9,6 +9,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'delete', id: number): void;
   (e: 'update', game: Game): void;
+  (e: 'edit', game: Game): void;
 }>();
 
 const isExpanded = ref(false);
@@ -41,7 +42,8 @@ const formattedCompletedDate = computed(() => {
     return new Date(props.game.CompletedOn).toLocaleDateString(undefined, {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
+      timeZone: 'UTC'
     });
   }
   return null;
@@ -56,11 +58,22 @@ const toggleExpand = () => {
   <div class="game-card" :class="{ expanded: isExpanded, completed: status === 'Completed', dropped: status === 'Dropped' }" @click="toggleExpand">
     <div class="card-header">
       <div class="game-info">
-        <h3>{{ game.Title }}</h3>
+        <div class="title-row">
+          <h3>{{ game.Title }}</h3>
+          <span class="playtime" v-if="game.PlaytimeHours">{{ game.PlaytimeHours }} hrs</span>
+        </div>
         <div class="meta">
-          <p class="platform" v-if="game.Genre">{{ game.Genre }}</p>
-          <span class="separator" v-if="game.Genre && game.PlaytimeHours">•</span>
-          <p class="playtime" v-if="game.PlaytimeHours">{{ game.PlaytimeHours }}h</p>
+          <template v-if="game.Genre">
+            <p class="platform">{{ game.Genre }}</p>
+            <span class="separator" v-if="game.Developer || game.ReleaseYear">•</span>
+          </template>
+          <template v-if="game.Developer">
+            <p class="developer">{{ game.Developer }}</p>
+            <span class="separator" v-if="game.ReleaseYear">•</span>
+          </template>
+          <template v-if="game.ReleaseYear">
+            <p class="year">{{ game.ReleaseYear }}</p>
+          </template>
         </div>
       </div>
       <div class="game-status">
@@ -73,6 +86,10 @@ const toggleExpand = () => {
     
     <transition name="expand">
       <div class="card-details" v-if="isExpanded">
+        <div class="detail-row" v-if="game.SteamAppId">
+          <span class="label">App ID:</span>
+          <span class="value">{{ game.SteamAppId }}</span>
+        </div>
         <div class="detail-row" v-if="game.Rating">
           <span class="label">Rating:</span>
           <span class="value">{{ game.Rating }}/5</span>
@@ -86,6 +103,7 @@ const toggleExpand = () => {
         </div>
         
         <div class="actions">
+          <button class="action-btn edit-btn" @click.stop="$emit('edit', game)">Edit</button>
           <button class="action-btn complete-btn" v-if="!game.Completed" @click.stop="handleStatusUpdate('completed')">Complete</button>
           <button class="action-btn drop-btn" v-if="!game.Dropped" @click.stop="handleStatusUpdate('dropped')">Drop</button>
           <button class="action-btn backlog-btn" v-if="game.Completed || game.Dropped" @click.stop="handleStatusUpdate('backlog')">Backlog</button>
@@ -116,7 +134,7 @@ const toggleExpand = () => {
 }
 
 .action-btn {
-  color: white;
+  color: rgb(92, 92, 92);
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 4px;
@@ -125,40 +143,46 @@ const toggleExpand = () => {
   transition: background-color 0.2s;
 }
 
+.edit-btn {
+  background-color: #e0e0e0;
+}
+
+.edit-btn:hover {
+  background-color: #d0d0d0;
+}
+
 .complete-btn {
-  background-color: #4CAF50;
+  background-color: #dcedc1;
 }
 
 .complete-btn:hover {
-  background-color: #45a049;
+  background-color: #b5c994;
 }
 
 .drop-btn {
-  background-color: #FF9800; /* Orange for drop action to distinguish from delete */
+  background-color: #ffd3b6;
 }
 
 .drop-btn:hover {
-  background-color: #f57c00;
+  background-color: #ecbfa0;
 }
 
 .backlog-btn {
-  background-color: #2196F3; /* Blue for backlog */
+  background-color: #c9dde8;
 }
 
 .backlog-btn:hover {
-  background-color: #1976D2;
+  background-color: #a0b8c5;
 }
 
 .delete-btn {
-  background-color: #ff5252;
+  background-color: #ff8b94;
 }
 
 .delete-btn:hover {
-  background-color: #d32f2f;
+  background-color: #dc717a;
 }
 
-
-/* Status Colors */
 .game-card.completed {
   background-color: #C8E6C9;
   border-color: #A5D6A7;
@@ -182,7 +206,7 @@ const toggleExpand = () => {
 }
 
 .game-card.dropped:hover {
-  background-color: #EF9A9A;
+  background-color: #f5c0c0;
 }
 
 
@@ -195,7 +219,7 @@ const toggleExpand = () => {
 }
 
 .game-card.dropped.expanded {
-  background-color: #EF9A9A;
+  background-color: #f5c0c0;
 }
 
 
@@ -206,9 +230,22 @@ const toggleExpand = () => {
 }
 
 .game-info h3 {
-  margin: 0 0 0.25rem 0;
+  margin: 0;
   font-size: 1.1rem;
   color: inherit;
+}
+
+.title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.playtime {
+  font-size: 0.85rem;
+  color: #444;
+  font-weight: normal;
 }
 
 .meta {
@@ -225,7 +262,7 @@ const toggleExpand = () => {
 }
 
 
-.platform, .playtime {
+.platform, .developer, .year, .playtime {
   margin: 0;
 }
 
@@ -288,8 +325,6 @@ const toggleExpand = () => {
   border-top-color: rgba(0, 0, 0, 0.1);
 }
 
-
-/* Expand Transition */
 .expand-enter-active,
 .expand-leave-active {
   transition: all 0.3s ease-in-out;

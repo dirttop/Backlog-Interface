@@ -4,7 +4,11 @@ import type { Game } from '../types';
 
 const emit = defineEmits<{
   (e: 'close'): void;
-  (e: 'create', game: Partial<Game>): void;
+  (e: 'save', game: Partial<Game>): void;
+}>();
+
+const props = defineProps<{
+  game?: Game | null;
 }>();
 
 const form = reactive({
@@ -15,10 +19,25 @@ const form = reactive({
   ReleaseYear: '',
   Completed: false,
   Dropped: false,
+  CompletedOn: '',
   PlaytimeHours: '',
   Rating: '',
   Review: ''
 });
+
+if (props.game) {
+  form.SteamAppId = props.game.SteamAppId.toString();
+  form.Title = props.game.Title;
+  form.Genre = props.game.Genre || '';
+  form.Developer = props.game.Developer || '';
+  form.ReleaseYear = props.game.ReleaseYear?.toString() || '';
+  form.Completed = props.game.Completed;
+  form.Dropped = props.game.Dropped;
+  form.CompletedOn = props.game.CompletedOn ? (props.game.CompletedOn.split('T')[0] || '') : '';
+  form.PlaytimeHours = props.game.PlaytimeHours?.toString() || '';
+  form.Rating = props.game.Rating?.toString() || '';
+  form.Review = props.game.Review || '';
+}
 
 const handleSubmit = () => {
   const newGame: any = {
@@ -29,24 +48,38 @@ const handleSubmit = () => {
     Dropped: form.Dropped
   };
 
+  if (form.Completed && form.CompletedOn) {
+    newGame.CompletedOn = new Date(form.CompletedOn).toISOString();
+  } else {
+    newGame.CompletedOn = null;
+  }
+
   if (form.Developer) newGame.Developer = form.Developer;
   if (form.ReleaseYear) newGame.ReleaseYear = Number(form.ReleaseYear);
   if (form.PlaytimeHours) newGame.PlaytimeHours = Number(form.PlaytimeHours);
   if (form.Rating) newGame.Rating = Number(form.Rating);
   if (form.Review) newGame.Review = form.Review;
 
-  emit('create', newGame);
+  emit('save', newGame);
 };
 </script>
 
 <template>
   <div class="modal-overlay" @click="$emit('close')">
     <div class="modal-content" @click.stop>
-      <h2>Add New Game</h2>
+      <h2>{{ game ? 'Edit Game' : 'Add New Game' }}</h2>
       <form @submit.prevent="handleSubmit">
         <div class="form-group">
           <label for="steamAppId">Steam App ID *</label>
-          <input id="steamAppId" v-model="form.SteamAppId" type="number" required placeholder="e.g. 892970" />
+          <input 
+            id="steamAppId" 
+            v-model="form.SteamAppId" 
+            type="number" 
+            required 
+            placeholder="e.g. 892970" 
+            :disabled="!!game"
+            :class="{ disabled: !!game }"
+          />
         </div>
 
         <div class="form-group">
@@ -94,6 +127,11 @@ const handleSubmit = () => {
           </label>
         </div>
 
+        <div class="form-group" v-if="form.Completed">
+          <label for="completedOn">Completed On</label>
+          <input id="completedOn" v-model="form.CompletedOn" type="date" />
+        </div>
+
         <div class="form-group">
           <label for="review">Review</label>
           <textarea id="review" v-model="form.Review" rows="3"></textarea>
@@ -101,7 +139,7 @@ const handleSubmit = () => {
 
         <div class="modal-actions">
           <button type="button" class="cancel-btn" @click="$emit('close')">Cancel</button>
-          <button type="submit" class="submit-btn">Add Game</button>
+          <button type="submit" class="submit-btn">{{ game ? 'Save Changes' : 'Add Game' }}</button>
         </div>
       </form>
     </div>
@@ -167,6 +205,12 @@ textarea {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 1rem;
+}
+
+input.disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  color: #888;
 }
 
 input:focus,

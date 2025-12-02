@@ -21,16 +21,21 @@ const searchQuery = ref('');
 const searchMode = ref<'name' | 'id'>('name');
 const displayedCount = ref(20);
 const showCreateModal = ref(false);
+const editingGame = ref<Game | null>(null);
 const BATCH_SIZE = 20;
 
-// Create game handler wrapper
-const createGame = async (newGame: Partial<Game>) => {
-  const success = await apiCreateGame(newGame);
+const handleSave = async (gameData: Partial<Game>) => {
+  let success = false;
+  
+  if (editingGame.value) {
+    success = await apiUpdateGame(gameData as Game);
+  } else {
+    success = await apiCreateGame(gameData);
+  }
+
   if (success) {
-    showCreateModal.value = false;
-    
-    // Reset search if active so user can see the new game
-    if (searchQuery.value) {
+    closeModal();
+    if (!editingGame.value && searchQuery.value) {
       searchQuery.value = '';
       searchMode.value = 'name';
       fetchGames();
@@ -38,11 +43,19 @@ const createGame = async (newGame: Partial<Game>) => {
   }
 };
 
-// Delete game handler wrapper
+const handleEditGame = (game: Game) => {
+  editingGame.value = game;
+  showCreateModal.value = true;
+};
+
+const closeModal = () => {
+  showCreateModal.value = false;
+  editingGame.value = null;
+};
+
 const deleteGame = async (id: number) => {
   const success = await apiDeleteGame(id);
   if (success) {
-    // If we're in ID search mode and deleted the only result, clear the search
     if (searchMode.value === 'id' && games.value.length === 0) {
       searchQuery.value = '';
       searchMode.value = 'name';
@@ -51,7 +64,6 @@ const deleteGame = async (id: number) => {
   }
 };
 
-// Debounce search
 let debounceTimeout: number | null = null;
 watch(searchQuery, (newQuery) => {
   if (debounceTimeout) clearTimeout(debounceTimeout);
@@ -65,30 +77,25 @@ watch(searchQuery, (newQuery) => {
   }, 500);
 });
 
-// Watch mode change to reset or fetch appropriate data
 watch(searchMode, () => {
   searchQuery.value = '';
-  fetchGames(); // Always reset to all games when switching modes
+  fetchGames();
 });
 
-// Get the subset of games to display
 const displayedGames = computed(() => {
   return games.value.slice(0, displayedCount.value);
 });
 
-// Load more games
 const loadMore = () => {
   if (displayedCount.value < games.value.length) {
     displayedCount.value += BATCH_SIZE;
   }
 };
 
-// Reset displayed count when search changes
 watch([searchQuery, searchMode], () => {
   displayedCount.value = BATCH_SIZE;
 });
 
-// Infinite scroll handler
 const handleScroll = () => {
   const bottomOfWindow = Math.max(window.pageYOffset, document.documentElement.scrollTop, document.body.scrollTop) + window.innerHeight === document.documentElement.offsetHeight;
   if (bottomOfWindow) {
@@ -130,6 +137,7 @@ onMounted(() => {
           :game="game"
           @delete="deleteGame"
           @update="apiUpdateGame"
+          @edit="handleEditGame"
         />
         
         <div v-if="displayedGames.length === 0 && !loading" class="no-results">
@@ -144,8 +152,9 @@ onMounted(() => {
 
     <TheCreateGameModal
       v-if="showCreateModal"
-      @close="showCreateModal = false"
-      @create="createGame"
+      :game="editingGame"
+      @close="closeModal"
+      @save="handleSave"
     />
   </div>
 </template>
