@@ -1,0 +1,13 @@
+{
+  "name": "swa-api",
+  "version": "1.0.0",
+  "description": "Proxy API for SWA",
+  "scripts": {
+    "start": "func start",
+    "test": "echo \"No tests yet...\""
+  },
+  "dependencies": {
+    "@azure/functions": "^4.0.0"
+  },
+  "main": "src/functions/*.js"
+}
