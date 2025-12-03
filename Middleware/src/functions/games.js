@@ -37,11 +37,17 @@ app.http('games', {
             context.log(`Full request URL: ${request.url}`);
             context.log(`Pathname: ${url.pathname}`);
             
+            // Try to get ID from path first (/api/games/123)
             const pathMatch = url.pathname.match(/\/api\/games\/?(.*)$/);
-            const path = pathMatch ? pathMatch[1] : '';
+            let path = pathMatch ? pathMatch[1] : '';
             
-            context.log(`Extracted path: "${path}"`);
-            context.log(`Path match result: ${JSON.stringify(pathMatch)}`);
+            // If no path, check query parameter (?id=123)
+            if (!path && url.searchParams.has('id')) {
+                path = url.searchParams.get('id');
+                context.log(`Got ID from query parameter: ${path}`);
+            }
+            
+            context.log(`Extracted path/ID: "${path}"`);
             
             // Construct the full URL to the backend API
             const fullUrl = path ? `${apiUrl}/games/${path}` : `${apiUrl}/games`;
