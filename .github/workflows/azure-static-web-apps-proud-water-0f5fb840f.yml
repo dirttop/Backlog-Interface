@@ -39,7 +39,9 @@ jobs:
         uses: Azure/get-keyvault-secrets@v1
         with:
           keyvault: ${{ secrets.KEY_VAULT_NAME }}
-          secrets: 'ApiKey'
+          secrets: |
+            ApiKey
+            ApiUrl
         id: kv
 
       - name: Build And Deploy
@@ -55,6 +57,10 @@ jobs:
           api_location: "" # Api source code path - optional
           output_location: "dist" # Built app content directory - optional
           ###### End of Repository/Build Configurations ######
+          deployment_environment: production
+        env:
+          VITE_API_KEY: ${{ steps.kv.outputs.ApiKey }}
+          VITE_API_URL: ${{ steps.kv.outputs.ApiUrl }}
 
 
   close_pull_request_job:
