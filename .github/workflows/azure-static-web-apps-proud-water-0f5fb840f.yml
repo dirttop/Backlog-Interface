@@ -14,11 +14,14 @@ jobs:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
+
     permissions:
       id-token: write
       contents: read
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
           submodules: true
           lfs: false
@@ -28,34 +31,31 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Azure Login
+      - name: Azure Login (OIDC)
         uses: azure/login@v1
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          enable-managed-identity: true
-      
-      - name: Who am I (account)
-        run: |
-          az account show --query "{id:id, name:name, user:user}" -o json
 
-      - name: Get access token for Key Vault (short check)
-        run: |
-          az account get-access-token --resource https://vault.azure.net --query "{accessToken:accessToken, expiresOn:expiresOn}" -o json
+      - name: Check Azure Account
+        run: az account show -o json
 
-      - name: Get secret with az (test)
+      - name: Get Key Vault Secrets (AZ CLI)
+        id: get_secrets
         run: |
-          az keyvault secret show --vault-name ${{ secrets.KEY_VAULT_NAME }} --name ApiKey --query value -o tsv
+          APIKEY=$(az keyvault secret show \
+            --vault-name ${{ secrets.KEY_VAULT_NAME }} \
+            --name ApiKey \
+            --query value -o tsv)
 
-      - name: Get Key Vault Secrets
-        uses: Azure/get-keyvault-secrets@v1
-        with:
-          keyvault: ${{ secrets.KEY_VAULT_NAME }}
-          secrets: |
-            ApiKey
-            ApiUrl
-        id: kv
+          APIURL=$(az keyvault secret show \
+            --vault-name ${{ secrets.KEY_VAULT_NAME }} \
+            --name ApiUrl \
+            --query value -o tsv)
+
+          echo "API_KEY=$APIKEY" >> $GITHUB_OUTPUT
+          echo "API_URL=$APIURL" >> $GITHUB_OUTPUT
 
       - name: Build and Deploy
         id: builddeploy
@@ -64,19 +64,20 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_PROUD_WATER_0F5FB840F }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          
+
           app_location: "App"
           api_location: "Middleware"
           output_location: "dist"
-          
+
           app_settings: |
-            BACKLOG_API_KEY: ${{ steps.kv.outputs.ApiKey }}
-            BACKLOG_API_URL: ${{ steps.kv.outputs.ApiUrl }}
+            BACKLOG_API_KEY=${{ steps.get_secrets.outputs.API_KEY }}
+            BACKLOG_API_URL=${{ steps.get_secrets.outputs.API_URL }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
     name: Close Pull Request Job
+
     steps:
       - name: Close Pull Request
         id: closepullrequest
