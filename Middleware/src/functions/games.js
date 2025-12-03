@@ -3,6 +3,7 @@ const { app } = require('@azure/functions');
 app.http('games', {
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     authLevel: 'anonymous',
+    route: 'games/{*path}',
     handler: async (request, context) => {
         context.log(`Proxying ${request.method} request to backend API`);
         context.log(`Request URL: ${request.url}`);
