@@ -34,8 +34,14 @@ app.http('games', {
         try {
             // Parse the URL to get the path after /api/games
             const url = new URL(request.url);
+            context.log(`Full request URL: ${request.url}`);
+            context.log(`Pathname: ${url.pathname}`);
+            
             const pathMatch = url.pathname.match(/\/api\/games\/?(.*)$/);
             const path = pathMatch ? pathMatch[1] : '';
+            
+            context.log(`Extracted path: "${path}"`);
+            context.log(`Path match result: ${JSON.stringify(pathMatch)}`);
             
             // Construct the full URL to the backend API
             const fullUrl = path ? `${apiUrl}/games/${path}` : `${apiUrl}/games`;
