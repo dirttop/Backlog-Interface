@@ -12,16 +12,12 @@ export function useGames() {
     loading.value = true;
     error.value = null;
     try {
-      let url = `${API_BASE_URL}/games`;
+      let url = API_BASE_URL;
       if (title) {
         url += `/${encodeURIComponent(title)}`;
       }
       
-      const response = await fetch(url, {
-        headers: {
-          'X-Api-Key': import.meta.env.VITE_API_KEY,
-        },
-      });
+      const response = await fetch(url);
       
       if (response.status === 404) {
         games.value = [];
@@ -65,11 +61,7 @@ export function useGames() {
     loading.value = true;
     error.value = null;
     try {
-      const response = await fetch(`${API_BASE_URL}/games/${id}`, {
-        headers: {
-          'X-Api-Key': import.meta.env.VITE_API_KEY,
-        },
-      });
+      const response = await fetch(`${API_BASE_URL}/${id}`);
       
       if (response.status === 404) {
         games.value = [];
@@ -94,11 +86,10 @@ export function useGames() {
   // Create game handler
   const createGame = async (newGame: Partial<Game>) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/games`, {
+      const response = await fetch(API_BASE_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': import.meta.env.VITE_API_KEY,
         },
         body: JSON.stringify(newGame),
       });
@@ -124,11 +115,8 @@ export function useGames() {
     if (!confirm('Are you sure you want to delete this game?')) return false;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/games/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/${id}`, {
         method: 'DELETE',
-        headers: {
-          'X-Api-Key': import.meta.env.VITE_API_KEY,
-        },
       });
 
       if (!response.ok) {
@@ -151,11 +139,10 @@ export function useGames() {
       // Remove ValidatedOn as requested
       const { ValidatedOn, ...gameData } = updatedGame;
 
-      const response = await fetch(`${API_BASE_URL}/games/${updatedGame.SteamAppId}`, {
+      const response = await fetch(`${API_BASE_URL}/${updatedGame.SteamAppId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': import.meta.env.VITE_API_KEY,
         },
         body: JSON.stringify(gameData),
       });

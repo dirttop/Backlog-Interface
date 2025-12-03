@@ -1,0 +1,91 @@
+const { app } = require('@azure/functions');
+
+app.http('games', {
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    authLevel: 'anonymous',
+    route: 'games/{*path}',
+    handler: async (request, context) => {
+        context.log(`Proxying ${request.method} request to backend API`);
+
+        const apiKey = process.env.BACKLOG_API_KEY;
+        const apiUrl = process.env.BACKLOG_API_URL;
+
+        if (!apiKey || !apiUrl) {
+            return {
+                status: 500,
+                jsonBody: { error: "Server misconfiguration: Missing API credentials" }
+            };
+        }
+
+        try {
+            // Get the path from route parameters (everything after /api/games/)
+            const path = request.params.path || '';
+            
+            // Construct the full URL to the backend API
+            const fullUrl = path ? `${apiUrl}/games/${path}` : `${apiUrl}/games`;
+            
+            context.log(`Forwarding to: ${fullUrl}`);
+
+            // Prepare headers
+            const headers = {
+                "Content-Type": "application/json",
+                "X-Api-Key": apiKey
+            };
+
+            // Prepare fetch options
+            const fetchOptions = {
+                method: request.method,
+                headers: headers
+            };
+
+            // Add body for POST and PUT requests
+            if (request.method === 'POST' || request.method === 'PUT') {
+                const body = await request.text();
+                if (body) {
+                    fetchOptions.body = body;
+                }
+            }
+
+            // Make the request to the backend API
+            const response = await fetch(fullUrl, fetchOptions);
+
+            // Handle different response scenarios
+            if (response.status === 404) {
+                return {
+                    status: 404,
+                    jsonBody: { error: "Resource not found" }
+                };
+            }
+
+            if (!response.ok) {
+                return {
+                    status: response.status,
+                    jsonBody: { error: `Backend API error: ${response.statusText}` }
+                };
+            }
+
+            // Parse JSON response from backend
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const data = await response.json();
+                return {
+                    status: response.status,
+                    jsonBody: data
+                };
+            } else {
+                // If backend doesn't return JSON, return success without body
+                return {
+                    status: response.status,
+                    body: response.ok ? "Success" : "Error"
+                };
+            }
+
+        } catch (error) {
+            context.log.error("Proxy error:", error);
+            return {
+                status: 500,
+                jsonBody: { error: "Failed to connect to backend API", details: error.message }
+            };
+        }
+    }
+});
