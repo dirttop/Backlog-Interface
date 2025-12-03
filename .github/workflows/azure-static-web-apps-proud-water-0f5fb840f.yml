@@ -36,13 +36,17 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           enable-managed-identity: true
       
-      - name: Debug Key Vault Access
+      - name: Who am I (account)
         run: |
-          az keyvault secret list --vault-name ${{ secrets.KEY_VAULT_NAME }}
+          az account show --query "{id:id, name:name, user:user}" -o json
 
-      - name: Verify Azure Login has access
+      - name: Get access token for Key Vault (short check)
         run: |
-          az keyvault secret list --vault-name ${{ secrets.KEY_VAULT_NAME }}
+          az account get-access-token --resource https://vault.azure.net --query "{accessToken:accessToken, expiresOn:expiresOn}" -o json
+
+      - name: Get secret with az (test)
+        run: |
+          az keyvault secret show --vault-name ${{ secrets.KEY_VAULT_NAME }} --name ApiKey --query value -o tsv
 
       - name: Get Key Vault Secrets
         uses: Azure/get-keyvault-secrets@v1
