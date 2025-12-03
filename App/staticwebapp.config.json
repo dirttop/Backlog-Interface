@@ -1,4 +1,10 @@
 {
+  "routes": [
+    {
+      "route": "/api/games/*",
+      "allowedRoles": ["anonymous"]
+    }
+  ],
   "navigationFallback": {
     "rewrite": "/index.html"
   }
