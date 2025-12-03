@@ -3,7 +3,6 @@ const { app } = require('@azure/functions');
 app.http('games', {
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     authLevel: 'anonymous',
-    route: 'games/{*path}',
     handler: async (request, context) => {
         context.log(`Proxying ${request.method} request to backend API`);
 
@@ -18,8 +17,10 @@ app.http('games', {
         }
 
         try {
-            // Get the path from route parameters (everything after /api/games/)
-            const path = request.params.path || '';
+            // Parse the URL to get the path after /api/games
+            const url = new URL(request.url);
+            const pathMatch = url.pathname.match(/\/api\/games\/?(.*)$/);
+            const path = pathMatch ? pathMatch[1] : '';
             
             // Construct the full URL to the backend API
             const fullUrl = path ? `${apiUrl}/games/${path}` : `${apiUrl}/games`;
