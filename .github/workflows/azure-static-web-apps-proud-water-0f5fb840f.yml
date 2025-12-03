@@ -35,6 +35,10 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Verify Azure Login has access
+        run: |
+          az keyvault secret list --vault-name ${{ secrets.KEY_VAULT_NAME }}
+
       - name: Get Key Vault Secrets
         uses: Azure/get-keyvault-secrets@v1
         with:
