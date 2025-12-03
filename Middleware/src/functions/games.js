@@ -5,14 +5,29 @@ app.http('games', {
     authLevel: 'anonymous',
     handler: async (request, context) => {
         context.log(`Proxying ${request.method} request to backend API`);
+        context.log(`Request URL: ${request.url}`);
 
         const apiKey = process.env.BACKLOG_API_KEY;
         const apiUrl = process.env.BACKLOG_API_URL;
 
+        // Log environment variable status (without exposing values)
+        context.log(`API Key present: ${!!apiKey}`);
+        context.log(`API URL present: ${!!apiUrl}`);
+        if (apiUrl) {
+            context.log(`API URL value: ${apiUrl}`);
+        }
+
         if (!apiKey || !apiUrl) {
+            context.log.error("Missing environment variables!");
             return {
                 status: 500,
-                jsonBody: { error: "Server misconfiguration: Missing API credentials" }
+                jsonBody: { 
+                    error: "Server misconfiguration: Missing API credentials",
+                    details: {
+                        hasApiKey: !!apiKey,
+                        hasApiUrl: !!apiUrl
+                    }
+                }
             };
         }
 
