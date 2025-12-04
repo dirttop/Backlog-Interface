@@ -9,7 +9,7 @@ Developed as a companion interface for the [Backlog API](https://github.com/dirt
 
 ## Introduction
 
-This interface provides a simple way to catalog and track Steam Games in your backlog. It interacts with the Backlog API via a middleware proxy to ensure API keys are never exposed to the client.
+This interface provides a simple way to catalog and track Steam Games in your backlog. It interacts with the Backlog API via a middleware proxy to ensure API keys are never exposed to the client. For stable builds look to version branches. The main branch is unstable and may be subject to changes.
 
 ## Getting Started
 This section will get you started with running the interface locally or deploying it to Azure.
