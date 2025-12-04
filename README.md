@@ -137,9 +137,17 @@ This project implements the best practices for security that can be accessed for
 
 ### Main View
 
-### Add Game Modal
+<img width="1328" height="937" alt="image" src="https://github.com/user-attachments/assets/1c42a439-b599-4a70-afae-24a49d4da760" />
+
+### Add/Edit Game Modal
+
+<img width="515" height="816" alt="image" src="https://github.com/user-attachments/assets/60d4e629-009f-4917-96ec-288c129d5f32" />
 
 ## Sources
 
 [Vue.js Documentation](https://vuejs.org/)
+
 [Azure Static Web Apps Documentation](https://learn.microsoft.com/en-us/azure/static-web-apps/)
+
+[Video on Vue](https://www.youtube.com/watch?v=RZnDQq2Y4Gg&t=436s) by Coding with Sjmalik
+
