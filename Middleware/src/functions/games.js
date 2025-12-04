@@ -14,9 +14,7 @@ app.http('games', {
         // Log environment variable status (without exposing values)
         context.log(`API Key present: ${!!apiKey}`);
         context.log(`API URL present: ${!!apiUrl}`);
-        if (apiUrl) {
-            context.log(`API URL value: ${apiUrl}`);
-        }
+
 
         if (!apiKey || !apiUrl) {
             context.log.error("Missing environment variables!");

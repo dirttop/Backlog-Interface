@@ -1,0 +1,17 @@
+# Azure Functions artifacts
+bin
+obj
+extensions.csproj
+local.settings.json
+
+# Node.js artifacts
+node_modules/
+dist/
+npm-debug.log
+yarn-error.log
+
+# VS Code
+.vscode/
+
+# MacOS
+.DS_Store
